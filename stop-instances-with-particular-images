@@ -1,0 +1,38 @@
+import boto3
+
+client = boto3.client('ec2')
+
+all_images = client.describe_images()
+
+running_image = ["abc"]
+
+filter_images = []
+
+for i in all_images:
+    if i not in running_image:
+        filter_images.append(i)
+
+
+instances = client.describe_instances(
+    Filters=[
+        {
+            'Name': 'image-id',
+            'Values': filter_images
+        },
+        {
+            'Name':'instance-state-name',
+            'Values':'running'
+        }
+    ]
+)
+
+instance_ids=[]
+
+for reservation in instances['Reservations']:
+    for instance in reservation["Instances"]:
+        instance_ids.append(instance['InstanceId'])
+
+stop_instances = client.stop_instances(
+    InstanceIds=instance_ids,
+)
+
